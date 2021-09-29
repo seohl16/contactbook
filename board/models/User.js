@@ -1,5 +1,5 @@
 var mongoose = require('mongoose');
-const Post = require('./Post');
+var bcrypt = require('bcryptjs');
 
 var userSchema = mongoose.Schema({
 	username:{type:String, required:[true, 'Username is required'], unique:true}, 
@@ -50,7 +50,7 @@ userSchema.path('password').validate(function(v){
 	if (!user.isNew){ // 회원 수정단계에서는 원래 패스워드가 맞는지, 컨폼 그리고 재확인 3단계를 거쳐야 한다
 		if (!user.currentPassword){
 			user.invalidate('currentPassword', 'Current Password is required');
-		} else if (user.currentPassword != user.originalPassword){
+		} else if (!bcrypt.compareSync(user.currentPassword != user.originalPassword)){
 			user.invalidate('currentPassword', 'Current Password is invalid');
 		}
 
@@ -59,6 +59,23 @@ userSchema.path('password').validate(function(v){
 		}
 	}
 });
+
+
+//hash password
+userSchema.pre('save', function(next){
+	var user = this;
+	if (!user.isModified('password')){
+		return next();
+	} else {
+		user.password = bcrypt.hashSync(user.password);
+		return next();
+	}
+});
+
+userSchema.methods.authenticate = function (password){
+	var user = this;
+	return bcrypt.compareSync(password, user.password);
+}
 
 var User = mongoose.model('user', userSchema);
 module.exports = User;
