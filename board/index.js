@@ -2,10 +2,12 @@ var express = require('express');
 var mongoose = require('mongoose');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
+var userConfig = require('./config/userConfig.json');
 var app = express();
 
 // DB setting
-mongoose.connect(process.env.MONGO_DB);
+mongoose.connect(`mongodb+srv://authuser:${userConfig.PW}@myfirstmap.2uz9q.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`)
+// mongoose.connect(process.env.MONGO_DB);
 var db = mongoose.connection;
 db.once('open', function(){
   console.log('DB connected');
@@ -23,6 +25,8 @@ app.use(methodOverride('_method'));
 
 // Routes
 app.use('/', require('./routes/home'));
+app.use('/posts', require('./routes/posts'));
+
 
 // Port setting
 var port = 3000;
