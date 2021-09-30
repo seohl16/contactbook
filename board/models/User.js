@@ -2,10 +2,25 @@ var mongoose = require('mongoose');
 var bcrypt = require('bcryptjs');
 
 var userSchema = mongoose.Schema({
-	username:{type:String, required:[true, 'Username is required'], unique:true}, 
-	password:{type:String, required:[true, 'Password is reuqired'], select:false}, 
-	name:{type:String, required:[true, 'Name is required']}, 
-	email:{type:String}
+	username:{
+		type:String, 
+		required:[true, 'Username is required'], 
+		match:[/^.{4,12}$/,'Should be 4-12 characters!'],
+		trim:true, // 빈칸이 있는 경우 빈칸을 제거해준다 
+		unique:true}, 
+	password:{
+		type:String, 
+		required:[true, 'Password is required'], 
+		select:false}, 
+	name:{
+		type:String, 
+		required:[true, 'Name is required'], 
+		match:[/^.{4,12}$/, 'Should be 4-12 characters!'], 
+		trim:true}, 
+	email:{
+		type:String, 
+		match:[/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,'Should be a vaild email address!'], 
+		trim:true}
 }, {
 	toObject:{virtuals:true}
 });
@@ -31,6 +46,9 @@ userSchema.virtual('newPassword')
   .set(function(value){ this._newPassword=value; });
 
 
+// password Regex added
+var passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,16}$/;
+var passwordRegexErrorMessage = 'Should be minimum 8 characters of alphabet and number combination!';
 //password validation 
 userSchema.path('password').validate(function(v){
 	var user = this;
@@ -40,12 +58,15 @@ userSchema.path('password').validate(function(v){
 		if (!user._passwordConfirmation){
 			user.invalidate('passwordConfirmation', 'PasswordConfirmation is required');
 		}
-
-		if (user.password !== user._passwordConfirmation){
+		if (!passwordRegex.test(user.password)){
+			user.invalidate('password', passwordRegexErrorMessage);
+		}
+		else if (user.password !== user._passwordConfirmation){
 			user.invalidate('passwordConfirmation', 'Password Confirmation does not matched!');
 		}
 	} 
 
+	// 정규표현식.test(문자열) 
 	// update user false인 경우로 회원정부 수정이다 
 	if (!user.isNew){ // 회원 수정단계에서는 원래 패스워드가 맞는지, 컨폼 그리고 재확인 3단계를 거쳐야 한다
 		if (!user.currentPassword){
@@ -54,7 +75,9 @@ userSchema.path('password').validate(function(v){
 			user.invalidate('currentPassword', 'Current Password is invalid');
 		}
 
-		if (user.newPassword !== user.passwordConfirmation){
+		if (user.newPassword && !passwordRegex.test(user.newPassword)){
+			user.invalidate('newPassword', passwordRegexErrorMessage)
+		} else if (user.newPassword !== user.passwordConfirmation){
 			user.invalidate('passwordConfirmation', 'Password Confirmation does not matched!');
 		}
 	}
