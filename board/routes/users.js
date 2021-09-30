@@ -92,7 +92,6 @@ module.exports = router;
 
 // functions
 function parseError(errors){
-  console.log(errors);
   var parsed = {};
   if(errors.name == 'ValidationError'){
     for(var name in errors.errors){

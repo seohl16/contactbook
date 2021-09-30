@@ -4,6 +4,7 @@ var bodyParser = require('body-parser');
 var methodOverride = require('method-override'); // post put 
 var flash = require('connect-flash'); // user error
 var session = require('express-session');
+var passport = require('./config/passport');
 var userConfig = require('./config/userConfig.json');
 var app = express();
 
@@ -26,6 +27,18 @@ app.use(bodyParser.urlencoded({extended:true}));
 app.use(methodOverride('_method'));
 app.use(flash());
 app.use(session({secret:'MySecret', resave:true, saveUninitialized:true})); // 사용자 구분 
+
+// Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+//Custom middlewares
+app.use(function(req, res, next){
+  res.locals.isAuthenticated = req.isAuthenticated();
+  res.locals.currentUser = req.user;
+  next();
+})
+
 
 // Routes
 app.use('/', require('./routes/home'));
