@@ -30,7 +30,7 @@ passport.use('local-login',
 					return done(null, user);
 				} else {
 					req.flash('username', username);
-					req.flash('errors', {login:'The usernmae or password is incorrect.'});
+					req.flash('errors', {login:'The username or password is incorrect.'});
 					return done(null, false);
 				}
 			})
